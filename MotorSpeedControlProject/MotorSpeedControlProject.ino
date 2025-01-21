@@ -14,12 +14,12 @@
 #include "menu.h"
 #include "states.h"
 #include "display.h"
-#include "eeprom_manager.h"  // Per loadParameters()
-#include "alarms.h"          // Per checkAlarms()
+#include "eeprom_manager.h"  // For loadParameters()
+#include "alarms.h"          // For checkAlarms()
 #include "globals.h"
 
 // Global variables definition
-SystemParameters systemParams;  // Definizione effettiva
+SystemParameters systemParams;  // Actual definition
 double pidInput = 0, pidOutput = 0, pidSetpoint = 0;
 PID motorPID(&pidInput, &pidOutput, &pidSetpoint, 
              DEFAULT_KP, DEFAULT_KI, DEFAULT_KD, DIRECT);
