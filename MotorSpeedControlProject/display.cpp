@@ -8,6 +8,7 @@
 #include "menu.h"
 #include "pins.h"
 #include "alarms.h"  // Per getAlarmText()
+#include "logo.h"    // For logo bitmap
 
 // Initialize display
 void initializeDisplay() {
@@ -20,9 +21,12 @@ void initializeDisplay() {
 // Show splash screen
 void showSplashScreen() {
     u8g2.clearBuffer();
-    u8g2.drawStr(10, 20, "DC Motor Control");
-    u8g2.drawStr(10, 35, "Version 1.0");
+    
+    // Draw full screen logo
+    drawLogo(0, 0);  // Logo occupa tutto lo schermo
+    
     u8g2.sendBuffer();
+    delay(2000);  // Mostra il logo per 2 secondi
 }
 
 // Global variables for message handling
@@ -251,6 +255,16 @@ void drawMenuItem(const char* text, MenuItem item, uint8_t y) {
                 break;
         }
         u8g2.drawStr(VALUE_X, y, buffer);
+    }
+}
+
+void drawLogo(uint8_t x, uint8_t y) {
+    static uint8_t buffer[16];  // Buffer per una singola riga
+    
+    // Disegna il logo una riga alla volta
+    for(uint8_t row = 0; row < logo_height; row++) {
+        decompressLogoRow(buffer, row);
+        u8g2.drawXBM(x, y + row, logo_width, 1, buffer);
     }
 }
 

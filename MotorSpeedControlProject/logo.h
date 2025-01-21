@@ -5,15 +5,13 @@
 #ifndef LOGO_H
 #define LOGO_H
 
-// Logo bitmap data
-const unsigned char LOGO_BITMAP[] PROGMEM = {
-    // Qui andrebbe inserito il bitmap del logo in formato appropriato
-    // Il formato esatto dipenderà dalla libreria grafica utilizzata
-    // e dalle dimensioni dell'immagine
-};
+#include <avr/pgmspace.h>
+#include <stdint.h>
 
-// Logo dimensions
-const uint8_t LOGO_WIDTH = 64;   // Adjust based on actual logo
-const uint8_t LOGO_HEIGHT = 64;  // Adjust based on actual logo
+#define logo_width 128
+#define logo_height 128
+
+// Funzione per decomprimere il logo riga per riga
+void decompressLogoRow(uint8_t* buffer, uint8_t row);
 
 #endif 

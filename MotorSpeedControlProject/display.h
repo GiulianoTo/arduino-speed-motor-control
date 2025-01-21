@@ -27,6 +27,7 @@ void updateDisplay();
 void updateLedBar();
 void drawMenuScreen();
 void drawMenuItem(const char* text, MenuItem item, uint8_t y);
+void drawLogo(uint8_t x, uint8_t y);
 
 // New functions
 void clearDisplay();
