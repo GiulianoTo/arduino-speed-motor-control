@@ -8,22 +8,22 @@
 #include "config.h"
 #include "pins.h"
 
-// System states
+// System states definition
 enum SystemState {
-    STATE_IDLE,
-    STATE_RUN,
-    STATE_ALARM
+    STATE_IDLE,    // Motor stopped, system ready
+    STATE_RUN,     // Motor running with PID control
+    STATE_ALARM    // Alarm condition, motor stopped
 };
 
-// External declarations
-extern float currentSpeed;
-extern float currentCurrent;
-extern bool isOvercurrent;
+// External declarations for system measurements
+extern float currentSpeed;    // Current motor speed in RPM
+extern float currentCurrent;  // Current motor current in Ampere
+extern bool isOvercurrent;    // Overcurrent condition flag
 
-// Function declarations
-void setStateColor(SystemState state);
-void readInputs();
-void handleAlarm();
-void updateStateMachine();
+// State machine functions
+void setStateColor(SystemState state);   // Set RGB LED color based on state
+void readInputs();                       // Read and process analog inputs
+void handleAlarm();                      // Handle alarm conditions
+void updateStateMachine();               // Update system state
 
 #endif 
