@@ -25,14 +25,88 @@ void showSplashScreen() {
     u8g2.sendBuffer();
 }
 
+// Global variables for message handling
+static char currentMessage[32] = "";
+static unsigned long messageStartTime = 0;
+static bool messageActive = false;
+
+// Global variables for popup handling
+static char popupTitle[16] = "";
+static char popupMessage[32] = "";
+static bool popupActive = false;
+static bool popupNeedsConfirmation = false;
+static unsigned long popupStartTime = 0;
+
+void clearDisplay() {
+    u8g2.clearBuffer();
+    u8g2.sendBuffer();
+}
+
+void showMessage(const char* message) {
+    strncpy(currentMessage, message, sizeof(currentMessage) - 1);
+    messageStartTime = millis();
+    messageActive = true;
+}
+
+void showPopup(const char* title, const char* message, bool needConfirmation) {
+    strncpy(popupTitle, title, sizeof(popupTitle) - 1);
+    strncpy(popupMessage, message, sizeof(popupMessage) - 1);
+    popupActive = true;
+    popupNeedsConfirmation = needConfirmation;
+    popupStartTime = millis();
+}
+
+bool isDisplayError() {
+    return !u8g2.begin();  // Returns false if display initialization failed
+}
+
+void handleDisplayError() {
+    // If we can't use the display, use LED indicators
+    digitalWrite(RGB_RED_PIN, HIGH);
+    digitalWrite(RGB_GREEN_PIN, LOW);
+    digitalWrite(RGB_BLUE_PIN, LOW);
+}
+
+// Update the existing updateDisplay() to handle messages and popups
 void updateDisplay() {
     static unsigned long lastUpdate = 0;
     unsigned long currentMillis = millis();
     
-    // Update display only at specified intervals
     if (currentMillis - lastUpdate >= DISPLAY_UPDATE_INTERVAL) {
         u8g2.clearBuffer();
         
+        // Check for active popup
+        if (popupActive) {
+            // Draw popup box
+            u8g2.drawFrame(10, 10, 108, 44);
+            u8g2.drawStr(12, 12, popupTitle);
+            u8g2.drawHLine(10, 22, 108);
+            u8g2.drawStr(12, 24, popupMessage);
+            
+            if (popupNeedsConfirmation) {
+                u8g2.drawStr(12, 36, "Press ENTER to continue");
+            } else if (currentMillis - popupStartTime >= POPUP_TIMEOUT) {
+                popupActive = false;
+            }
+            
+            u8g2.sendBuffer();
+            lastUpdate = currentMillis;
+            return;
+        }
+        
+        // Check for active message
+        if (messageActive) {
+            if (currentMillis - messageStartTime >= MESSAGE_DISPLAY_TIME) {
+                messageActive = false;
+            } else {
+                u8g2.drawStr(0, HEADER_HEIGHT, currentMessage);
+                u8g2.sendBuffer();
+                lastUpdate = currentMillis;
+                return;
+            }
+        }
+        
+        // Normal display update
         // Draw header with system state
         u8g2.setFont(u8g2_font_6x10_tf);
         u8g2.drawStr(0, 0, "Status:");
