@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "config.h"
+#include "pid.h"
 
 // Menu states
 enum MenuState {
@@ -47,5 +48,6 @@ void handleMenuSelection();
 void handleBackButton();
 void navigateMenu(bool up);
 bool readButton(uint8_t pin);
+void adjustValue(bool increase);
 
 #endif 
