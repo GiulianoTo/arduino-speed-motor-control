@@ -141,13 +141,16 @@ void handleMenuSelection() {
                     currentMenu = MENU_PID;
                     selectedItem = ITEM_PID_P;
                     break;
-                case ITEM_BACK:
-                    currentMenu = MENU_MAIN;
-                    selectedItem = ITEM_RUN;
+                case ITEM_RESET:
+                    showPopup("Warning", "Reset to defaults?", true);
                     break;
                 case ITEM_CALIBRATION:
                     currentMenu = MENU_CALIBRATION;
                     handleCalibration();
+                    break;
+                case ITEM_BACK:
+                    currentMenu = MENU_MAIN;
+                    selectedItem = ITEM_RUN;
                     break;
             }
             break;

@@ -8,6 +8,7 @@
 #include <U8g2lib.h>
 #include "config.h"
 #include "menu.h"
+#include "alarms.h"  // For getAlarmText()
 
 // Display layout constants
 const uint8_t HEADER_HEIGHT = 12;
