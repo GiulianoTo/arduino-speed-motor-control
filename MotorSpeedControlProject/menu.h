@@ -28,7 +28,9 @@ enum MenuItem {
     ITEM_SPEED_FS,
     ITEM_PID_P,
     ITEM_PID_I,
-    ITEM_PID_D
+    ITEM_PID_D,
+    ITEM_RESET,      // Reset to defaults
+    ITEM_CALIBRATION // Start calibration
 };
 
 // Button debounce
@@ -40,6 +42,11 @@ extern MenuItem selectedItem;
 extern unsigned long lastMenuActivity;
 extern bool editingValue;
 extern unsigned long lastButtonPress;
+extern bool hasUnsavedChanges;  // Solo dichiarazione extern
+
+// Function declarations
+void resetToDefaults();
+void handleCalibration();
 
 // Function declarations
 void initializeMenu();
