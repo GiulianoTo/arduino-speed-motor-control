@@ -7,7 +7,7 @@
 #include "states.h"
 #include "menu.h"
 #include "pins.h"
-#include "alarms.h"  // Per getAlarmText()
+#include "alarms.h"  // For getAlarmText()
 #include "logo.h"    // For logo bitmap
 
 // Initialize display

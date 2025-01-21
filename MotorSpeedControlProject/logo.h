@@ -1,5 +1,5 @@
 /*
- * Logo bitmap for DC Motor Speed Control Project
+ * Logo bitmap declarations for DC Motor Speed Control Project
  */
 
 #ifndef LOGO_H
@@ -11,7 +11,7 @@
 #define logo_width 128
 #define logo_height 128
 
-// Funzione per decomprimere il logo riga per riga
+// Function to decompress a single row of the logo
 void decompressLogoRow(uint8_t* buffer, uint8_t row);
 
 #endif 
