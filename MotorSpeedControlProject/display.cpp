@@ -70,17 +70,46 @@ void clearDisplay() {
 }
 
 void showMessage(const char* message) {
-    strncpy(currentMessage, message, sizeof(currentMessage) - 1);
-    messageStartTime = millis();
-    messageActive = true;
+    // Draw message with fade effect
+    static const uint16_t fadeColors[] = {0x0410, 0x0308, 0x0204, 0x0102};
+    
+    for(uint8_t i = 0; i < 4; i++) {
+        tft.drawRect(0+i, HEADER_HEIGHT+i, 128-i*2, 20-i*2, fadeColors[i]);
+    }
+    
+    tft.setTextColor(WHITE);
+    tft.setCursor(4, HEADER_HEIGHT + 6);
+    tft.print(message);
 }
 
 void showPopup(const char* title, const char* message, bool needConfirmation) {
-    strncpy(popupTitle, title, sizeof(popupTitle) - 1);
-    strncpy(popupMessage, message, sizeof(popupMessage) - 1);
-    popupActive = true;
-    popupNeedsConfirmation = needConfirmation;
-    popupStartTime = millis();
+    tft.fillScreen(BLACK);
+    
+    // Draw popup box with gradient border
+    for(uint8_t i = 0; i < 3; i++) {
+        uint16_t borderColor = 0x0410 + (i * 0x0410);  // Gradient blue
+        tft.drawRect(10-i, 10-i, 108+i*2, 44+i*2, borderColor);
+    }
+    
+    // Draw title with highlight
+    tft.fillRect(11, 11, 106, 12, BLUE);
+    tft.setTextColor(WHITE);
+    tft.setCursor(12, 12);
+    tft.print(title);
+    
+    // Draw message
+    tft.setTextColor(CYAN);
+    tft.setCursor(12, 24);
+    tft.print(message);
+    
+    if (needConfirmation) {
+        // Draw button with 3D effect
+        tft.fillRect(20, 36, 88, 12, 0x0410);
+        tft.drawRect(20, 36, 88, 12, WHITE);
+        tft.setTextColor(WHITE);
+        tft.setCursor(22, 38);
+        tft.print("Press ENTER to continue");
+    }
 }
 
 bool isDisplayError() {
@@ -102,54 +131,76 @@ void updateDisplay() {
     if (currentMillis - lastUpdate >= DISPLAY_UPDATE_INTERVAL) {
         tft.fillScreen(BLACK);
         
-        // Draw header with colored background
-        tft.fillRect(0, 0, 128, HEADER_HEIGHT, STATE_COLORS[currentState]);
-        tft.setTextColor(BLACK);  // Black text on colored background
+        // Draw header with gradient
+        for(uint8_t i = 0; i < HEADER_HEIGHT; i++) {
+            uint16_t gradientColor = STATE_COLORS[currentState] - (i * 0x0101);
+            tft.drawFastHLine(0, i, 128, gradientColor);
+        }
+        
+        // Draw status text with shadow effect
+        tft.setTextColor(BLACK);
+        tft.setCursor(3, 3);
+        tft.print("Status: ");
+        tft.setTextColor(WHITE);
         tft.setCursor(2, 2);
         tft.print("Status: ");
         
         switch(currentState) {
             case STATE_IDLE:
+                tft.setTextColor(BLUE);
                 tft.print("IDLE");
                 break;
             case STATE_RUN:
+                tft.setTextColor(GREEN);
                 tft.print("RUNNING");
                 break;
             case STATE_ALARM:
+                // Blinking effect for alarm
+                static bool alarmBlink = false;
+                alarmBlink = !alarmBlink;
+                tft.setTextColor(alarmBlink ? RED : YELLOW);
                 tft.print(getAlarmText());
                 break;
         }
         
-        // If in menu mode, show menu
+        // Draw separator line with gradient
+        for(uint8_t x = 0; x < 128; x++) {
+            uint16_t lineColor = 0x0410 + (x * 0x0020);
+            tft.drawPixel(x, HEADER_HEIGHT, lineColor);
+        }
+        
+        // Rest of display update...
         if (currentMenu != MENU_NONE) {
             drawMenuScreen();
         } else {
-            // Show main operating screen with colored values
+            // Show main screen with enhanced colors
             char buffer[20];
             
-            // Speed with color based on value
-            uint16_t speedColor = map(currentSpeed, 0, systemParams.speedFullScale, 
-                                    0x07, 0xE0);  // Blue to green gradient
+            // Speed gauge with color gradient
+            int speedPercent = map(currentSpeed, 0, systemParams.speedFullScale, 0, 100);
+            uint16_t speedColor = map(speedPercent, 0, 100, 0x001F, 0x07E0);
+            tft.fillRect(0, MENU_START_Y, speedPercent * 1.28, 8, speedColor);
+            tft.drawRect(0, MENU_START_Y, 128, 8, WHITE);
+            
             tft.setTextColor(speedColor);
             snprintf(buffer, sizeof(buffer), "Speed: %d RPM", (int)currentSpeed);
-            tft.setCursor(0, MENU_START_Y);
+            tft.setCursor(0, MENU_START_Y + 10);
             tft.print(buffer);
             
-            // Current with warning colors
-            uint16_t currentColor = currentCurrent > (systemParams.currentFullScale * 0.8) ? 
-                                  RED : WHITE;
+            // Current bar with warning colors
+            int currentPercent = map(currentCurrent, 0, systemParams.currentFullScale, 0, 100);
+            uint16_t currentColor;
+            if (currentPercent > 90) currentColor = RED;
+            else if (currentPercent > 75) currentColor = YELLOW;
+            else currentColor = GREEN;
+            
+            tft.fillRect(0, MENU_START_Y + LINE_HEIGHT + 2, currentPercent * 1.28, 8, currentColor);
+            tft.drawRect(0, MENU_START_Y + LINE_HEIGHT + 2, 128, 8, WHITE);
+            
             tft.setTextColor(currentColor);
             snprintf(buffer, sizeof(buffer), "Current: %.1fA", currentCurrent);
-            tft.setCursor(0, MENU_START_Y + LINE_HEIGHT);
+            tft.setCursor(0, MENU_START_Y + LINE_HEIGHT + 12);
             tft.print(buffer);
-            
-            // Setpoint in cyan
-            if (currentState == STATE_RUN) {
-                tft.setTextColor(CYAN);
-                snprintf(buffer, sizeof(buffer), "Set: %d RPM", (int)pidSetpoint);
-                tft.setCursor(0, MENU_START_Y + LINE_HEIGHT * 2);
-                tft.print(buffer);
-            }
         }
         
         lastUpdate = currentMillis;
