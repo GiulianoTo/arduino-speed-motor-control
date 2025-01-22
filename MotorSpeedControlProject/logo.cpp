@@ -25,8 +25,22 @@ static const uint8_t base_pattern[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-// Decompress a single row of the logo
-void decompressLogoRow(uint8_t* buffer, uint8_t row) {
+// Decompress a single row of the logo with color
+void decompressLogoRow(uint16_t* buffer, uint8_t row) {
     uint8_t pattern_row = row % 16;  // Calculate which row of the base pattern
-    memcpy_P(buffer, &base_pattern[pattern_row * 16], 16);
+    uint8_t temp[16];
+    memcpy_P(temp, &base_pattern[pattern_row * 16], 16);
+    
+    // Convert each bit to a 16-bit color
+    for(uint8_t i = 0; i < 128; i++) {
+        uint8_t byte_index = i / 8;
+        uint8_t bit_index = 7 - (i % 8);
+        bool pixel = temp[byte_index] & (1 << bit_index);
+        
+        if(pixel) {
+            buffer[i] = WHITE;  // Logo pixels in white
+        } else {
+            buffer[i] = BLACK;  // Background in black
+        }
+    }
 } 

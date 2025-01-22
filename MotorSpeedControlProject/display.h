@@ -5,10 +5,26 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <U8g2lib.h>
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include "config.h"
 #include "menu.h"
 #include "alarms.h"  // For getAlarmText()
+
+// Display pins
+#define TFT_CS    10  // CS pin
+#define TFT_RST   9   // Reset pin
+#define TFT_DC    8   // DC pin (A0)
+
+// Display colors (16-bit 5-6-5 RGB format)
+#define BLACK    0x0000
+#define BLUE     0x001F
+#define RED      0xF800
+#define GREEN    0x07E0
+#define CYAN     0x07FF
+#define MAGENTA  0xF81F
+#define YELLOW   0xFFE0
+#define WHITE    0xFFFF
 
 // Display layout constants
 const uint8_t HEADER_HEIGHT = 12;
@@ -26,7 +42,7 @@ void showSplashScreen();
 void updateDisplay();
 void updateLedBar();
 void drawMenuScreen();
-void drawMenuItem(const char* text, MenuItem item, uint8_t y);
+void drawMenuItem(const char* text, MenuItem item, uint8_t y, uint16_t color);
 void drawLogo(uint8_t x, uint8_t y);
 
 // New functions
@@ -36,6 +52,6 @@ void showPopup(const char* title, const char* message, bool needConfirmation = f
 bool isDisplayError();
 void handleDisplayError();
 
-extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
+extern Adafruit_ST7735 tft;  // Display instance
 
 #endif 

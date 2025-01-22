@@ -9,24 +9,48 @@
 #include "pins.h"
 #include "alarms.h"  // For getAlarmText()
 #include "logo.h"    // For logo bitmap
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+
+// Initialize display instance
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+
+// Colors for states
+const uint16_t STATE_COLORS[] = {
+    BLUE,    // STATE_IDLE
+    GREEN,   // STATE_RUN
+    RED      // STATE_ALARM
+};
+
+// Colors for menu items
+const uint16_t MENU_COLORS[] = {
+    WHITE,   // Normal text
+    YELLOW,  // Selected item
+    CYAN,    // Editing value
+    RED      // Alarm/Error
+};
+
+// Global flag for display initialization status
+static bool displayInitialized = false;
 
 // Initialize display
 void initializeDisplay() {
-    u8g2.begin();
-    u8g2.setFont(u8g2_font_6x10_tf);
-    u8g2.setDrawColor(1);
-    u8g2.setFontPosTop();
+    tft.initR(INITR_BLACKTAB);  // Initialize ST7735S chip
+    displayInitialized = true;   // Set flag if initialization succeeds
+    
+    tft.setRotation(2);         // Rotate 180 degrees if needed
+    tft.fillScreen(BLACK);
+    tft.setTextSize(1);
+    tft.setTextColor(WHITE);
 }
 
 // Show splash screen
 void showSplashScreen() {
-    u8g2.clearBuffer();
-    
-    // Draw full screen logo
-    drawLogo(0, 0);  // Logo occupa tutto lo schermo
-    
-    u8g2.sendBuffer();
-    delay(2000);  // Mostra il logo per 2 secondi
+    tft.fillScreen(BLACK);
+    drawLogo(0, 0);
+    tft.setTextColor(WHITE);
+    tft.setTextSize(1);
+    delay(2000);
 }
 
 // Global variables for message handling
@@ -42,8 +66,7 @@ static bool popupNeedsConfirmation = false;
 static unsigned long popupStartTime = 0;
 
 void clearDisplay() {
-    u8g2.clearBuffer();
-    u8g2.sendBuffer();
+    tft.fillScreen(BLACK);
 }
 
 void showMessage(const char* message) {
@@ -61,7 +84,7 @@ void showPopup(const char* title, const char* message, bool needConfirmation) {
 }
 
 bool isDisplayError() {
-    return !u8g2.begin();  // Returns false if display initialization failed
+    return !displayInitialized;  // Return initialization status
 }
 
 void handleDisplayError() {
@@ -77,52 +100,23 @@ void updateDisplay() {
     unsigned long currentMillis = millis();
     
     if (currentMillis - lastUpdate >= DISPLAY_UPDATE_INTERVAL) {
-        u8g2.clearBuffer();
+        tft.fillScreen(BLACK);
         
-        // Check for active popup
-        if (popupActive) {
-            // Draw popup box
-            u8g2.drawFrame(10, 10, 108, 44);
-            u8g2.drawStr(12, 12, popupTitle);
-            u8g2.drawHLine(10, 22, 108);
-            u8g2.drawStr(12, 24, popupMessage);
-            
-            if (popupNeedsConfirmation) {
-                u8g2.drawStr(12, 36, "Press ENTER to continue");
-            } else if (currentMillis - popupStartTime >= POPUP_TIMEOUT) {
-                popupActive = false;
-            }
-            
-            u8g2.sendBuffer();
-            lastUpdate = currentMillis;
-            return;
-        }
+        // Draw header with colored background
+        tft.fillRect(0, 0, 128, HEADER_HEIGHT, STATE_COLORS[currentState]);
+        tft.setTextColor(BLACK);  // Black text on colored background
+        tft.setCursor(2, 2);
+        tft.print("Status: ");
         
-        // Check for active message
-        if (messageActive) {
-            if (currentMillis - messageStartTime >= MESSAGE_DISPLAY_TIME) {
-                messageActive = false;
-            } else {
-                u8g2.drawStr(0, HEADER_HEIGHT, currentMessage);
-                u8g2.sendBuffer();
-                lastUpdate = currentMillis;
-                return;
-            }
-        }
-        
-        // Normal display update
-        // Draw header with system state
-        u8g2.setFont(u8g2_font_6x10_tf);
-        u8g2.drawStr(0, 0, "Status:");
         switch(currentState) {
             case STATE_IDLE:
-                u8g2.drawStr(50, 0, "IDLE");
+                tft.print("IDLE");
                 break;
             case STATE_RUN:
-                u8g2.drawStr(50, 0, "RUNNING");
+                tft.print("RUNNING");
                 break;
             case STATE_ALARM:
-                u8g2.drawStr(50, 0, getAlarmText());
+                tft.print(getAlarmText());
                 break;
         }
         
@@ -130,25 +124,34 @@ void updateDisplay() {
         if (currentMenu != MENU_NONE) {
             drawMenuScreen();
         } else {
-            // Show main operating screen
+            // Show main operating screen with colored values
             char buffer[20];
             
-            // Show current speed
+            // Speed with color based on value
+            uint16_t speedColor = map(currentSpeed, 0, systemParams.speedFullScale, 
+                                    0x07, 0xE0);  // Blue to green gradient
+            tft.setTextColor(speedColor);
             snprintf(buffer, sizeof(buffer), "Speed: %d RPM", (int)currentSpeed);
-            u8g2.drawStr(0, MENU_START_Y, buffer);
+            tft.setCursor(0, MENU_START_Y);
+            tft.print(buffer);
             
-            // Show current current
+            // Current with warning colors
+            uint16_t currentColor = currentCurrent > (systemParams.currentFullScale * 0.8) ? 
+                                  RED : WHITE;
+            tft.setTextColor(currentColor);
             snprintf(buffer, sizeof(buffer), "Current: %.1fA", currentCurrent);
-            u8g2.drawStr(0, MENU_START_Y + LINE_HEIGHT, buffer);
+            tft.setCursor(0, MENU_START_Y + LINE_HEIGHT);
+            tft.print(buffer);
             
-            // Show setpoint if running
+            // Setpoint in cyan
             if (currentState == STATE_RUN) {
+                tft.setTextColor(CYAN);
                 snprintf(buffer, sizeof(buffer), "Set: %d RPM", (int)pidSetpoint);
-                u8g2.drawStr(0, MENU_START_Y + LINE_HEIGHT * 2, buffer);
+                tft.setCursor(0, MENU_START_Y + LINE_HEIGHT * 2);
+                tft.print(buffer);
             }
         }
         
-        u8g2.sendBuffer();
         lastUpdate = currentMillis;
     }
 }
@@ -173,13 +176,13 @@ void updateLedBar() {
 
 // Draw menu screen
 void drawMenuScreen() {
-    u8g2.setFont(u8g2_font_6x10_tf);
+    tft.setTextColor(WHITE);
     
     switch(currentMenu) {
         case MENU_MAIN:
-            drawMenuItem("Run", ITEM_RUN, MENU_START_Y);
-            drawMenuItem("Settings", ITEM_SETTINGS, MENU_START_Y + LINE_HEIGHT);
-            drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 2);
+            drawMenuItem("Run", ITEM_RUN, MENU_START_Y, GREEN);
+            drawMenuItem("Settings", ITEM_SETTINGS, MENU_START_Y + LINE_HEIGHT, CYAN);
+            drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 2, WHITE);
             break;
             
         case MENU_SETTINGS:
@@ -187,49 +190,49 @@ void drawMenuScreen() {
                 char buffer[20];
                 
                 snprintf(buffer, sizeof(buffer), "Current: %.1fA", systemParams.currentFullScale);
-                drawMenuItem(buffer, ITEM_CURRENT_FS, MENU_START_Y);
+                drawMenuItem(buffer, ITEM_CURRENT_FS, MENU_START_Y, YELLOW);
                 
                 snprintf(buffer, sizeof(buffer), "Speed: %dRPM", systemParams.speedFullScale);
-                drawMenuItem(buffer, ITEM_SPEED_FS, MENU_START_Y + LINE_HEIGHT);
+                drawMenuItem(buffer, ITEM_SPEED_FS, MENU_START_Y + LINE_HEIGHT, MAGENTA);
                 
-                drawMenuItem("PID Settings", ITEM_PID_P, MENU_START_Y + LINE_HEIGHT * 2);
-                drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 3);
+                drawMenuItem("PID Settings", ITEM_PID_P, MENU_START_Y + LINE_HEIGHT * 2, CYAN);
+                drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 3, WHITE);
             }
             break;
             
         case MENU_PID:
             {
                 char buffer[20];
+                uint16_t pidColor = 0x07E0;  // Base green for PID parameters
                 
                 snprintf(buffer, sizeof(buffer), "Kp: %.2f", systemParams.kp);
-                drawMenuItem(buffer, ITEM_PID_P, MENU_START_Y);
+                drawMenuItem(buffer, ITEM_PID_P, MENU_START_Y, pidColor);
                 
                 snprintf(buffer, sizeof(buffer), "Ki: %.2f", systemParams.ki);
-                drawMenuItem(buffer, ITEM_PID_I, MENU_START_Y + LINE_HEIGHT);
+                drawMenuItem(buffer, ITEM_PID_I, MENU_START_Y + LINE_HEIGHT, pidColor + 0x0400);
                 
                 snprintf(buffer, sizeof(buffer), "Kd: %.2f", systemParams.kd);
-                drawMenuItem(buffer, ITEM_PID_D, MENU_START_Y + LINE_HEIGHT * 2);
+                drawMenuItem(buffer, ITEM_PID_D, MENU_START_Y + LINE_HEIGHT * 2, pidColor + 0x0800);
                 
-                drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 3);
+                drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 3, WHITE);
             }
             break;
     }
 }
 
-// Draw single menu item
-void drawMenuItem(const char* text, MenuItem item, uint8_t y) {
+// Draw single menu item with color
+void drawMenuItem(const char* text, MenuItem item, uint8_t y, uint16_t color) {
     // Draw selection indicator
     if (selectedItem == item) {
-        u8g2.drawStr(0, y, ">");
-        
-        // Draw edit indicator if editing
-        if (editingValue) {
-            u8g2.drawStr(VALUE_X - 10, y, "*");
-        }
+        tft.fillRect(0, y-1, 128, LINE_HEIGHT, color);
+        tft.setTextColor(BLACK);  // Black text on colored background
+    } else {
+        tft.setTextColor(color);  // Colored text on black background
     }
     
     // Draw menu item text
-    u8g2.drawStr(10, y, text);
+    tft.setCursor(10, y);
+    tft.print(text);
     
     // If editing this item, draw value with edit indicator
     if (editingValue && selectedItem == item) {
@@ -254,17 +257,33 @@ void drawMenuItem(const char* text, MenuItem item, uint8_t y) {
                 buffer[0] = '\0';
                 break;
         }
-        u8g2.drawStr(VALUE_X, y, buffer);
+        
+        // Draw editing indicator and value
+        static bool flash = false;
+        static unsigned long lastFlash = 0;
+        if (millis() - lastFlash > 300) {
+            flash = !flash;
+            lastFlash = millis();
+        }
+        
+        if (flash) {
+            tft.setTextColor(YELLOW);
+        } else {
+            tft.setTextColor(WHITE);
+        }
+        
+        tft.setCursor(VALUE_X, y);
+        tft.print(buffer);
     }
 }
 
 void drawLogo(uint8_t x, uint8_t y) {
-    static uint8_t buffer[16];  // Buffer per una singola riga
+    static uint16_t buffer[128];  // Buffer per una riga di pixel colorati
     
     // Disegna il logo una riga alla volta
     for(uint8_t row = 0; row < logo_height; row++) {
         decompressLogoRow(buffer, row);
-        u8g2.drawXBM(x, y + row, logo_width, 1, buffer);
+        tft.drawRGBBitmap(x, y + row, buffer, logo_width, 1);
     }
 }
 
