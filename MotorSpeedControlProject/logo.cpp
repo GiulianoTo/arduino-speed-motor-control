@@ -38,9 +38,33 @@ void decompressLogoRow(uint16_t* buffer, uint8_t row) {
         bool pixel = temp[byte_index] & (1 << bit_index);
         
         if(pixel) {
-            buffer[i] = WHITE;  // Logo pixels in white
+            // Add gradient effect to the blue color
+            uint8_t x = i;
+            uint8_t y = row;
+            
+            // Calculate gradient based on position
+            uint16_t blue = 0x001F;  // Base blue color
+            uint16_t gradient;
+            
+            // Create a subtle gradient effect
+            if (y < 64) {
+                // Top half: lighter
+                gradient = blue + ((63 - y) * 0x0020);
+            } else {
+                // Bottom half: darker
+                gradient = blue - ((y - 64) * 0x0020);
+            }
+            
+            // Add horizontal variation
+            if (x < 64) {
+                gradient += ((63 - x) * 0x0020);
+            } else {
+                gradient -= ((x - 64) * 0x0020);
+            }
+            
+            buffer[i] = gradient;
         } else {
-            buffer[i] = BLACK;  // Background in black
+            buffer[i] = LOGO_BG;  // Black background
         }
     }
 } 
