@@ -5,10 +5,11 @@
  * using an Arduino Nano Every board.
  */
 
-#include <U8g2lib.h>
 #include <Wire.h>
 #include <EEPROM.h>
 #include <PID_v1.h>
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_ST7735.h> // Hardware-specific library
 #include "pins.h"
 #include "config.h"
 #include "menu.h"
@@ -27,8 +28,7 @@ PID motorPID(&pidInput, &pidOutput, &pidSetpoint,
 // System state
 SystemState currentState = STATE_IDLE;
 
-// Display instance
-U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
+// La definizione di tft è stata spostata in display.cpp
 
 void setup() {
   // Initialize all pins

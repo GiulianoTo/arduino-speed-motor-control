@@ -6,7 +6,7 @@
 #define DISPLAY_H
 
 #include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+#include <Adafruit_ST7735.h> // Hardware-specific library
 #include "config.h"
 #include "menu.h"
 #include "alarms.h"  // For getAlarmText()
