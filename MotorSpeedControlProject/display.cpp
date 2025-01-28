@@ -204,7 +204,10 @@ void drawMenuScreen() {
             {
                 char buffer[20];
                 // Mostriamo solo 3 voci alla volta invece di 4
-                snprintf(buffer, sizeof(buffer), "Current: %.1fA", systemParams.currentFullScale);
+                int int_part = (int)systemParams.currentFullScale;                      
+                int decimal_part = (int)((systemParams.currentFullScale - int_part) * 10);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "Current: %d.%d A", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_CURRENT_FS, MENU_START_Y);
                 
                 snprintf(buffer, sizeof(buffer), "Speed: %dRPM", systemParams.speedFullScale);
@@ -217,14 +220,24 @@ void drawMenuScreen() {
         case MENU_PID:
             {
                 char buffer[20];
-                // Mostriamo solo 3 parametri PID alla volta
-                snprintf(buffer, sizeof(buffer), "Kp: %.2f", systemParams.kp);
+                int int_part, decimal_part;
+
+                int_part = (int)systemParams.kp;                      
+                decimal_part = (int)((systemParams.kp - int_part) * 100);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "Kp: %d.%02d", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_PID_P, MENU_START_Y);
                 
-                snprintf(buffer, sizeof(buffer), "Ki: %.2f", systemParams.ki);
+                int_part = (int)systemParams.ki;                      
+                decimal_part = (int)((systemParams.ki - int_part) * 100);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "Ki: %d.%02d", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_PID_I, MENU_START_Y + LINE_HEIGHT);
                 
-                snprintf(buffer, sizeof(buffer), "Kd: %.2f", systemParams.kd);
+                int_part = (int)systemParams.kd;                      
+                decimal_part = (int)((systemParams.kd - int_part) * 100);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "Kd: %d.%02d", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_PID_D, MENU_START_Y + LINE_HEIGHT * 2);
             }
             break;
