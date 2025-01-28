@@ -19,6 +19,37 @@ bool editingValue = false;
 unsigned long lastButtonPress = 0;
 bool hasUnsavedChanges = false;
 unsigned long currentMillis;
+bool popupActive = false;
+bool popupNeedsConfirmation = false;
+
+// Add popup response handling
+void handlePopupResponse(bool confirmed) {
+    static MenuState previousMenu = MENU_NONE;
+    
+    if (confirmed) {
+        if (editingValue) {
+            ::saveParameters();
+            if (currentMenu == MENU_PID) {
+                updatePIDParameters();
+            }
+            editingValue = false;
+            hasUnsavedChanges = false;
+        }
+        
+        // Handle calibration confirmation
+        if (currentMenu == MENU_CALIBRATION) {
+            handleCalibration();
+        }
+    } else {
+        // If not confirmed, revert to previous state
+        if (editingValue) {
+            loadParameters();  // Reload from EEPROM
+            editingValue = false;
+            hasUnsavedChanges = false;
+        }
+        currentMenu = previousMenu;
+    }
+}
 
 static void buttonUpHandler(uint8_t btnId, uint8_t btnState) {
     if (btnState == BTN_PRESSED) {
@@ -56,19 +87,39 @@ static void buttonDownHandler(uint8_t btnId, uint8_t btnState) {
 
 static void buttonEnterHandler(uint8_t btnId, uint8_t btnState) {
     if (btnState == BTN_PRESSED) {
-        Serial.println("1");
         lastMenuActivity = currentMillis;
-        handleMenuSelection();
+
+        // Controlla se il popup è attivo
+        if (popupActive) {
+            // Gestisci la risposta al popup
+            if (popupNeedsConfirmation) {
+                    handlePopupResponse(true);  // Conferma
+                    popupActive = false;         // Nascondi il popup
+                }
+        }
+        else {
+            handleMenuSelection();
+        }
     } else {
         // btnState == BTN_OPEN.
-        Serial.println("0");
+
     }
 }
 
 static void buttonBackHandler(uint8_t btnId, uint8_t btnState) {
     if (btnState == BTN_PRESSED) {
         lastMenuActivity = currentMillis;
-        handleBackButton();
+
+        // Controlla se il popup è attivo
+        if (popupActive) {
+            // Gestisci la risposta al popup
+            if (popupNeedsConfirmation) {
+                handlePopupResponse(false);  // Annulla
+                popupActive = false;          // Nascondi il popup
+                }
+        }
+        else
+            handleBackButton();
     } else {
         // btnState == BTN_OPEN.
     }
@@ -113,6 +164,7 @@ void processMenu() {
     buttonEnter.update(digitalRead(BUTTON_ENTER_PIN));
     buttonBack.update(digitalRead(BUTTON_BACK_PIN));
     
+
 }
 
 // Handle menu selection
@@ -311,7 +363,7 @@ void adjustValue(bool increase) {
             
         case ITEM_SPEED_FS:
             if (increase) {
-                if (systemParams.speedFullScale >= 500) {
+                if (systemParams.speedFullScale >= 5000) {
                     limitReached = true;
                 } else {
                     systemParams.speedFullScale += STEP_SPEED;
@@ -381,31 +433,3 @@ void handleCalibration() {
     calibrationStep++;
 }
 
-// Add popup response handling
-void handlePopupResponse(bool confirmed) {
-    static MenuState previousMenu = MENU_NONE;
-    
-    if (confirmed) {
-        if (editingValue) {
-            ::saveParameters();
-            if (currentMenu == MENU_PID) {
-                updatePIDParameters();
-            }
-            editingValue = false;
-            hasUnsavedChanges = false;
-        }
-        
-        // Handle calibration confirmation
-        if (currentMenu == MENU_CALIBRATION) {
-            handleCalibration();
-        }
-    } else {
-        // If not confirmed, revert to previous state
-        if (editingValue) {
-            loadParameters();  // Reload from EEPROM
-            editingValue = false;
-            hasUnsavedChanges = false;
-        }
-        currentMenu = previousMenu;
-    }
-}
