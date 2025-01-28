@@ -31,6 +31,9 @@ SystemState currentState = STATE_IDLE;
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 void setup() {
+
+  Serial.begin(9600);
+
   // Initialize all pins
   initializePins();
   
@@ -67,6 +70,8 @@ void loop() {
   
   // Process menu if needed
   processMenu();
+
+
   
   // Handle alarms
   checkAlarms();

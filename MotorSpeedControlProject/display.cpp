@@ -58,6 +58,16 @@ void showPopup(const char* title, const char* message, bool needConfirmation) {
     popupActive = true;
     popupNeedsConfirmation = needConfirmation;
     popupStartTime = millis();
+    
+    // Draw popup box - dimensioni ridotte per display 64px
+    u8g2.drawFrame(10, 5, 108, 34);  // Ridotto da 44 a 34 pixel in altezza
+    u8g2.drawStr(12, 7, popupTitle);
+    u8g2.drawHLine(10, 17, 108);
+    u8g2.drawStr(12, 19, popupMessage);
+    
+    if (popupNeedsConfirmation) {
+        u8g2.drawStr(12, 31, "Press ENTER to continue");
+    }
 }
 
 bool isDisplayError() {
@@ -185,7 +195,7 @@ void drawMenuScreen() {
         case MENU_SETTINGS:
             {
                 char buffer[20];
-                
+                // Mostriamo solo 3 voci alla volta invece di 4
                 snprintf(buffer, sizeof(buffer), "Current: %.1fA", systemParams.currentFullScale);
                 drawMenuItem(buffer, ITEM_CURRENT_FS, MENU_START_Y);
                 
@@ -193,14 +203,13 @@ void drawMenuScreen() {
                 drawMenuItem(buffer, ITEM_SPEED_FS, MENU_START_Y + LINE_HEIGHT);
                 
                 drawMenuItem("PID Settings", ITEM_PID_P, MENU_START_Y + LINE_HEIGHT * 2);
-                drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 3);
             }
             break;
             
         case MENU_PID:
             {
                 char buffer[20];
-                
+                // Mostriamo solo 3 parametri PID alla volta
                 snprintf(buffer, sizeof(buffer), "Kp: %.2f", systemParams.kp);
                 drawMenuItem(buffer, ITEM_PID_P, MENU_START_Y);
                 
@@ -209,8 +218,6 @@ void drawMenuScreen() {
                 
                 snprintf(buffer, sizeof(buffer), "Kd: %.2f", systemParams.kd);
                 drawMenuItem(buffer, ITEM_PID_D, MENU_START_Y + LINE_HEIGHT * 2);
-                
-                drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 3);
             }
             break;
     }

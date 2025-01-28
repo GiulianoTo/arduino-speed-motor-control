@@ -11,10 +11,10 @@
 #include "alarms.h"  // For getAlarmText()
 
 // Display layout constants
-const uint8_t HEADER_HEIGHT = 12;
-const uint8_t LINE_HEIGHT = 10;
-const uint8_t MENU_START_Y = 15;
-const uint8_t VALUE_X = 75;
+const uint8_t HEADER_HEIGHT = 10;
+const uint8_t LINE_HEIGHT = 8;
+const uint8_t MENU_START_Y = 12;
+const uint8_t VALUE_X = 70;
 
 // Message display timing
 const unsigned long MESSAGE_DISPLAY_TIME = 2000;  // 2 seconds

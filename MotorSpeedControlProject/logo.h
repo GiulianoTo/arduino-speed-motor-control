@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 #define logo_width 128
-#define logo_height 128
+#define logo_height 64
 
 // Function to decompress a single row of the logo
 void decompressLogoRow(uint8_t* buffer, uint8_t row);

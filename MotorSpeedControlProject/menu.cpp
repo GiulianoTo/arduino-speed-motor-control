@@ -9,6 +9,7 @@
 #include "eeprom_manager.h"  // For saveParameters()
 #include "pid.h"            // For updatePIDParameters()
 #include "states.h"         // For SystemState and currentState
+#include <debounce.h>
 
 // Menu global variables definition
 MenuState currentMenu = MENU_NONE;
@@ -17,35 +18,74 @@ unsigned long lastMenuActivity = 0;
 bool editingValue = false;
 unsigned long lastButtonPress = 0;
 bool hasUnsavedChanges = false;
+unsigned long currentMillis;
 
-// Read buttons with debounce
-bool readButton(uint8_t pin) {
-    static unsigned long lastDebounceTime = 0;
-    static int lastButtonState = HIGH;
-    bool buttonPressed = false;
-    
-    int reading = digitalRead(pin);
-    
-    if (reading != lastButtonState) {
-        lastDebounceTime = millis();
-    }
-    
-    if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-        if (reading == LOW) {  // Button pressed (active low)
-            buttonPressed = true;
-            lastMenuActivity = millis();
+static void buttonUpHandler(uint8_t btnId, uint8_t btnState) {
+  if (btnState == BTN_PRESSED) {
+            lastMenuActivity = currentMillis;
+        if (editingValue) {
+            adjustValue(true);
+        } else {
+            navigateMenu(true);
         }
-    }
-    
-    lastButtonState = reading;
-    return buttonPressed;
+  } else {
+    // btnState == BTN_OPEN.
+  }
 }
+
+static void buttonDownHandler(uint8_t btnId, uint8_t btnState) {
+  if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
+        if (editingValue) {
+            adjustValue(false);
+        } else {
+            navigateMenu(false);
+        }
+
+
+
+  } else {
+    // btnState == BTN_OPEN.
+  }
+}
+
+static void buttonEnterHandler(uint8_t btnId, uint8_t btnState) {
+  if (btnState == BTN_PRESSED) {
+
+        Serial.println("1");
+        lastMenuActivity = currentMillis;
+        handleMenuSelection();
+
+
+  } else {
+    // btnState == BTN_OPEN.
+            Serial.println("0");
+  }
+}
+
+static void buttonBackHandler(uint8_t btnId, uint8_t btnState) {
+  if (btnState == BTN_PRESSED) {
+            lastMenuActivity = currentMillis;
+        handleBackButton();
+  } else {
+    // btnState == BTN_OPEN.
+  }
+}
+
+// Initialize debounce objects
+static Button buttonUp(0, buttonUpHandler);
+static Button buttonDown(0, buttonDownHandler);
+static Button buttonEnter(0, buttonEnterHandler);
+static Button buttonBack(0, buttonBackHandler);
+
+
 
 // Process menu navigation
 void processMenu() {
     static unsigned long lastSaveCheck = 0;
     const unsigned long AUTO_SAVE_INTERVAL = 30000;  // 30 seconds
-    unsigned long currentMillis = millis();
+    
+    currentMillis = millis();
     
     // Auto-save check
     if (hasUnsavedChanges && 
@@ -67,39 +107,12 @@ void processMenu() {
         return;
     }
     
-    // Check buttons at debounce interval
-    if (currentMillis - lastButtonPress >= DEBOUNCE_DELAY) {
-        // Read buttons
-        if (readButton(BUTTON_UP_PIN)) {
-            lastMenuActivity = currentMillis;
-            if (editingValue) {
-                adjustValue(true);
-            } else {
-                navigateMenu(true);
-            }
-        }
-        
-        if (readButton(BUTTON_DOWN_PIN)) {
-            lastMenuActivity = currentMillis;
-            if (editingValue) {
-                adjustValue(false);
-            } else {
-                navigateMenu(false);
-            }
-        }
-        
-        if (readButton(BUTTON_ENTER_PIN)) {
-            lastMenuActivity = currentMillis;
-            handleMenuSelection();
-        }
-        
-        if (readButton(BUTTON_BACK_PIN)) {
-            lastMenuActivity = currentMillis;
-            handleBackButton();
-        }
-        
-        lastButtonPress = currentMillis;
-    }
+    // Update buttons state
+    buttonUp.update(digitalRead(BUTTON_UP_PIN));
+    buttonDown.update(digitalRead(BUTTON_DOWN_PIN));
+    buttonEnter.update(digitalRead(BUTTON_ENTER_PIN));
+    buttonBack.update(digitalRead(BUTTON_BACK_PIN));
+    
 }
 
 // Handle menu selection
