@@ -186,12 +186,17 @@ void drawMenuScreen() {
     u8g2.setFont(u8g2_font_6x10_tf);
     
     switch(currentMenu) {
+
         case MENU_MAIN:
-            drawMenuItem("Run", ITEM_RUN, MENU_START_Y);
+            if (currentState == STATE_RUN) {
+                drawMenuItem("Stop", ITEM_STOP, MENU_START_Y);
+            } else {
+                drawMenuItem("Run", ITEM_RUN, MENU_START_Y);
+            }
             drawMenuItem("Settings", ITEM_SETTINGS, MENU_START_Y + LINE_HEIGHT);
             drawMenuItem("Back", ITEM_BACK, MENU_START_Y + LINE_HEIGHT * 2);
             break;
-            
+
         case MENU_SETTINGS:
             {
                 char buffer[20];

@@ -120,7 +120,7 @@ void handleMenuSelection() {
     switch(currentMenu) {
         case MENU_NONE:
             currentMenu = MENU_MAIN;
-            selectedItem = ITEM_RUN;
+            selectedItem = (currentState == STATE_RUN) ? ITEM_STOP : ITEM_RUN;
             break;
             
         case MENU_MAIN:
@@ -130,6 +130,11 @@ void handleMenuSelection() {
                         currentState = STATE_RUN;
                         currentMenu = MENU_NONE;
                     }
+                    break;
+                case ITEM_STOP:
+                    currentState = STATE_IDLE;
+                    pidSetpoint = 0;  // Reset setpoint
+                    currentMenu = MENU_NONE;
                     break;
                 case ITEM_SETTINGS:
                     currentMenu = MENU_SETTINGS;
@@ -205,13 +210,19 @@ void navigateMenu(bool up) {
     switch(currentMenu) {
         case MENU_MAIN:
             if (up) {
-                if (selectedItem == ITEM_RUN) selectedItem = ITEM_BACK;
-                else if (selectedItem == ITEM_SETTINGS) selectedItem = ITEM_RUN;
-                else if (selectedItem == ITEM_BACK) selectedItem = ITEM_SETTINGS;
+                if (selectedItem == ITEM_RUN || selectedItem == ITEM_STOP) 
+                    selectedItem = ITEM_BACK;
+                else if (selectedItem == ITEM_SETTINGS) 
+                    selectedItem = (currentState == STATE_RUN) ? ITEM_STOP : ITEM_RUN;
+                else if (selectedItem == ITEM_BACK) 
+                    selectedItem = ITEM_SETTINGS;
             } else {
-                if (selectedItem == ITEM_RUN) selectedItem = ITEM_SETTINGS;
-                else if (selectedItem == ITEM_SETTINGS) selectedItem = ITEM_BACK;
-                else if (selectedItem == ITEM_BACK) selectedItem = ITEM_RUN;
+                if (selectedItem == ITEM_RUN || selectedItem == ITEM_STOP) 
+                    selectedItem = ITEM_SETTINGS;
+                else if (selectedItem == ITEM_SETTINGS) 
+                    selectedItem = ITEM_BACK;
+                else if (selectedItem == ITEM_BACK) 
+                    selectedItem = (currentState == STATE_RUN) ? ITEM_STOP : ITEM_RUN;
             }
             break;
             
