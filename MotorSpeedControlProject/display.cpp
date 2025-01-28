@@ -148,7 +148,10 @@ void updateDisplay() {
             u8g2.drawStr(0, MENU_START_Y, buffer);
             
             // Show current current
-            snprintf(buffer, sizeof(buffer), "Current: %.1fA", currentCurrent);
+            int int_part = (int)currentCurrent;                      
+            int decimal_part = (int)((currentCurrent - int_part) * 10);
+            if (decimal_part < 0) decimal_part = -decimal_part;    
+            snprintf(buffer, sizeof(buffer), "Current: %d.%d A", int_part, decimal_part);
             u8g2.drawStr(0, MENU_START_Y + LINE_HEIGHT, buffer);
             
             // Show setpoint if running

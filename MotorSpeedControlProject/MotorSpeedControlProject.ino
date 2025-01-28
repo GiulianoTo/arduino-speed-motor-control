@@ -42,7 +42,6 @@ void setup() {
   
   // Show splash screen
   showSplashScreen();
-  delay(5000);
   
   // Initialize PID controller
   motorPID.SetMode(AUTOMATIC);

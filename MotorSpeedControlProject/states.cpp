@@ -4,6 +4,7 @@
 
 #include "states.h"
 #include "globals.h"
+#include "Mapf.h"
 
 // Current measurements
 float currentSpeed = 0.0;
@@ -36,11 +37,11 @@ void setStateColor(SystemState state) {
 void readInputs() {
     // Read speed input
     int speedRaw = analogRead(SPEED_SENSE_PIN);
-    currentSpeed = map(speedRaw, 0, ADC_RESOLUTION-1, 0, systemParams.speedFullScale);
+    currentSpeed = mapf(speedRaw, 0, ADC_RESOLUTION-1, 0, systemParams.speedFullScale);
     
     // Read current input
     int currentRaw = analogRead(CURRENT_SENSE_PIN);
-    currentCurrent = map(currentRaw, 0, ADC_RESOLUTION-1, 0, systemParams.currentFullScale);
+    currentCurrent = mapf(currentRaw, 0, ADC_RESOLUTION-1, 0, systemParams.currentFullScale);
     
     // Check for overcurrent condition
     isOvercurrent = (currentCurrent >= (systemParams.currentFullScale * OVERCURRENT_THRESHOLD));
