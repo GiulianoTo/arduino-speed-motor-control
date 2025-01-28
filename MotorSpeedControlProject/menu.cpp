@@ -21,55 +21,57 @@ bool hasUnsavedChanges = false;
 unsigned long currentMillis;
 
 static void buttonUpHandler(uint8_t btnId, uint8_t btnState) {
-  if (btnState == BTN_PRESSED) {
-            lastMenuActivity = currentMillis;
-        if (editingValue) {
+    if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
+        if (currentMenu == MENU_NONE && currentState == STATE_RUN) {
+            // Se siamo nella schermata principale e in running, modifica setpoint
+            adjustSetpoint(true);
+        }
+        else if (editingValue) {
             adjustValue(true);
         } else {
             navigateMenu(true);
         }
-  } else {
-    // btnState == BTN_OPEN.
-  }
+    } else {
+        // btnState == BTN_OPEN.
+    }
 }
 
 static void buttonDownHandler(uint8_t btnId, uint8_t btnState) {
-  if (btnState == BTN_PRESSED) {
+    if (btnState == BTN_PRESSED) {
         lastMenuActivity = currentMillis;
-        if (editingValue) {
+        if (currentMenu == MENU_NONE && currentState == STATE_RUN) {
+            // Se siamo nella schermata principale e in running, modifica setpoint
+            adjustSetpoint(false);
+        }
+        else if (editingValue) {
             adjustValue(false);
         } else {
             navigateMenu(false);
         }
-
-
-
-  } else {
-    // btnState == BTN_OPEN.
-  }
+    } else {
+        // btnState == BTN_OPEN.
+    }
 }
 
 static void buttonEnterHandler(uint8_t btnId, uint8_t btnState) {
-  if (btnState == BTN_PRESSED) {
-
+    if (btnState == BTN_PRESSED) {
         Serial.println("1");
         lastMenuActivity = currentMillis;
         handleMenuSelection();
-
-
-  } else {
-    // btnState == BTN_OPEN.
-            Serial.println("0");
-  }
+    } else {
+        // btnState == BTN_OPEN.
+        Serial.println("0");
+    }
 }
 
 static void buttonBackHandler(uint8_t btnId, uint8_t btnState) {
-  if (btnState == BTN_PRESSED) {
-            lastMenuActivity = currentMillis;
+    if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
         handleBackButton();
-  } else {
-    // btnState == BTN_OPEN.
-  }
+    } else {
+        // btnState == BTN_OPEN.
+    }
 }
 
 // Initialize debounce objects
@@ -77,8 +79,6 @@ static Button buttonUp(0, buttonUpHandler);
 static Button buttonDown(0, buttonDownHandler);
 static Button buttonEnter(0, buttonEnterHandler);
 static Button buttonBack(0, buttonBackHandler);
-
-
 
 // Process menu navigation
 void processMenu() {
