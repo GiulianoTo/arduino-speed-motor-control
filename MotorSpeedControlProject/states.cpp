@@ -9,24 +9,25 @@
 float currentSpeed = 0.0;
 float currentCurrent = 0.0;
 bool isOvercurrent = false;
+SystemState previousState = STATE_UNDEFINED;
 
 // RGB LED colors for different states
 void setStateColor(SystemState state) {
     switch(state) {
         case STATE_IDLE:
-            analogWrite(RGB_BLUE_PIN, 255);
-            analogWrite(RGB_RED_PIN, 0);
-            analogWrite(RGB_GREEN_PIN, 0);
+            digitalWrite(RGB_BLUE_PIN, LOW);
+            digitalWrite(RGB_RED_PIN, LOW);
+            digitalWrite(RGB_GREEN_PIN, HIGH);
             break;
         case STATE_RUN:
-            analogWrite(RGB_GREEN_PIN, 255);
-            analogWrite(RGB_RED_PIN, 0);
-            analogWrite(RGB_BLUE_PIN, 0);
+            digitalWrite(RGB_BLUE_PIN, HIGH);
+            digitalWrite(RGB_RED_PIN, LOW);
+            digitalWrite(RGB_GREEN_PIN, LOW);
             break;
         case STATE_ALARM:
-            analogWrite(RGB_RED_PIN, 255);
-            analogWrite(RGB_GREEN_PIN, 0);
-            analogWrite(RGB_BLUE_PIN, 0);
+            digitalWrite(RGB_BLUE_PIN, LOW);
+            digitalWrite(RGB_RED_PIN, HIGH);
+            digitalWrite(RGB_GREEN_PIN, LOW);
             break;
     }
 }
@@ -69,7 +70,6 @@ void handleAlarm() {
 
 // State machine update
 void updateStateMachine() {
-    SystemState previousState = currentState;
     
     // Check for alarm conditions
     if (isOvercurrent) {
@@ -97,6 +97,7 @@ void updateStateMachine() {
     
     // Update RGB LED if state changed
     if (previousState != currentState) {
+        previousState = currentState;
         setStateColor(currentState);
     }
     
