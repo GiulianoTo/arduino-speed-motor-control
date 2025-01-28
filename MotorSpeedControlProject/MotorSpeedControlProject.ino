@@ -70,8 +70,14 @@ void loop() {
   // Process menu if needed
   processMenu();
 
+  // Call the PID processing function
+  processPID();
 
-  
+// Debug
+  if (currentState == STATE_RUN)
+  analogWrite(RGB_BLUE_PIN, pidOutput);
+
   // Handle alarms
   checkAlarms();
+
 } 
