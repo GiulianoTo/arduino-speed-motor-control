@@ -161,10 +161,12 @@ void updateDisplay() {
             snprintf(buffer, sizeof(buffer), "Current: %d.%d A", int_part, decimal_part);
             u8g2.drawStr(0, MENU_START_Y + LINE_HEIGHT, buffer);
             
-            // Show setpoint if running
+            // Show setpoint and pwm if running
             if (currentState == STATE_RUN) {
-                snprintf(buffer, sizeof(buffer), "Set: %d RPM", (int)pidSetpoint);
+                snprintf(buffer, sizeof(buffer), "PWM: %d", (int)pidOutput);
                 u8g2.drawStr(0, MENU_START_Y + LINE_HEIGHT * 2, buffer);
+                snprintf(buffer, sizeof(buffer), "Set: %d RPM", (int)pidSetpoint);
+                u8g2.drawStr(0, MENU_START_Y + LINE_HEIGHT * 3, buffer);
             }
         }
         

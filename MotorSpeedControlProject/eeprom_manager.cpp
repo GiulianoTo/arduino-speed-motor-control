@@ -52,6 +52,7 @@ void loadParameters() {
     if (isnan(systemParams.kd)) {
         systemParams.kd = DEFAULT_KD;
     }
+    updatePIDParameters();
 }
 
 // Save parameters to EEPROM
