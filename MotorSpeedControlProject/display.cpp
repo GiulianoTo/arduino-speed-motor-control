@@ -216,10 +216,10 @@ void drawMenuScreen() {
                 int int_part = (int)systemParams.currentFullScale;                      
                 int decimal_part = (int)((systemParams.currentFullScale - int_part) * 10);
                 if (decimal_part < 0) decimal_part = -decimal_part;    
-                snprintf(buffer, sizeof(buffer), "Current: %d.%d A", int_part, decimal_part);
+                snprintf(buffer, sizeof(buffer), "Curr. FS: %d.%dA", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_CURRENT_FS, MENU_START_Y);
                 
-                snprintf(buffer, sizeof(buffer), "Speed: %dRPM", systemParams.speedFullScale);
+                snprintf(buffer, sizeof(buffer), "Speed FS: %dRPM", systemParams.speedFullScale);
                 drawMenuItem(buffer, ITEM_SPEED_FS, MENU_START_Y + LINE_HEIGHT);
                 
                 drawMenuItem("PID Settings", ITEM_PID_P, MENU_START_Y + LINE_HEIGHT * 2);
@@ -234,19 +234,19 @@ void drawMenuScreen() {
                 int_part = (int)systemParams.kp;                      
                 decimal_part = (int)((systemParams.kp - int_part) * 100);
                 if (decimal_part < 0) decimal_part = -decimal_part;    
-                snprintf(buffer, sizeof(buffer), "Kp: %d.%02d", int_part, decimal_part);
+                snprintf(buffer, sizeof(buffer), "Kp:       %d.%02d", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_PID_P, MENU_START_Y);
                 
                 int_part = (int)systemParams.ki;                      
                 decimal_part = (int)((systemParams.ki - int_part) * 100);
                 if (decimal_part < 0) decimal_part = -decimal_part;    
-                snprintf(buffer, sizeof(buffer), "Ki: %d.%02d", int_part, decimal_part);
+                snprintf(buffer, sizeof(buffer), "Ki:       %d.%02d", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_PID_I, MENU_START_Y + LINE_HEIGHT);
                 
                 int_part = (int)systemParams.kd;                      
                 decimal_part = (int)((systemParams.kd - int_part) * 100);
                 if (decimal_part < 0) decimal_part = -decimal_part;    
-                snprintf(buffer, sizeof(buffer), "Kd: %d.%02d", int_part, decimal_part);
+                snprintf(buffer, sizeof(buffer), "Kd:       %d.%02d", int_part, decimal_part);
                 drawMenuItem(buffer, ITEM_PID_D, MENU_START_Y + LINE_HEIGHT * 2);
             }
             break;
@@ -255,6 +255,10 @@ void drawMenuScreen() {
 
 // Draw single menu item
 void drawMenuItem(const char* text, MenuItem item, uint8_t y) {
+
+int int_part;
+int decimal_part;
+
     // Draw selection indicator
     if (selectedItem == item) {
         u8g2.drawStr(0, y, ">");
@@ -273,19 +277,31 @@ void drawMenuItem(const char* text, MenuItem item, uint8_t y) {
         char buffer[10];
         switch(item) {
             case ITEM_CURRENT_FS:
-                snprintf(buffer, sizeof(buffer), "%.1f", systemParams.currentFullScale);
+                int_part = (int)systemParams.currentFullScale;                      
+                decimal_part = (int)((systemParams.currentFullScale - int_part) * 10);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "%d.%d", int_part, decimal_part);
                 break;
             case ITEM_SPEED_FS:
                 snprintf(buffer, sizeof(buffer), "%d", systemParams.speedFullScale);
                 break;
             case ITEM_PID_P:
-                snprintf(buffer, sizeof(buffer), "%.2f", systemParams.kp);
+                int_part = (int)systemParams.kp;                      
+                decimal_part = (int)((systemParams.kp - int_part) * 100);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "%d.%02d", int_part, decimal_part);
                 break;
             case ITEM_PID_I:
-                snprintf(buffer, sizeof(buffer), "%.2f", systemParams.ki);
+                int_part = (int)systemParams.ki;                      
+                decimal_part = (int)((systemParams.ki - int_part) * 100);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "%d.%02d", int_part, decimal_part);
                 break;
             case ITEM_PID_D:
-                snprintf(buffer, sizeof(buffer), "%.2f", systemParams.kd);
+                int_part = (int)systemParams.kd;                      
+                decimal_part = (int)((systemParams.kd - int_part) * 100);
+                if (decimal_part < 0) decimal_part = -decimal_part;    
+                snprintf(buffer, sizeof(buffer), "%d.%02d", int_part, decimal_part);
                 break;
             default:
                 buffer[0] = '\0';
