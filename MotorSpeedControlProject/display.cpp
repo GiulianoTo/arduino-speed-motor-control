@@ -44,8 +44,8 @@ static bool messageActive = false;
 // Global variables for popup handling
 static char popupTitle[16] = "";
 static char popupMessage[32] = "";
-static bool popupActive = false;
-static bool popupNeedsConfirmation = false;
+bool popupActive = false;
+bool popupNeedsConfirmation = false;
 static unsigned long popupStartTime = 0;
 
 void clearDisplay() {

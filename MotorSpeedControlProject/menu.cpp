@@ -19,8 +19,8 @@ bool editingValue = false;
 unsigned long lastButtonPress = 0;
 bool hasUnsavedChanges = false;
 unsigned long currentMillis;
-bool popupActive = false;
-bool popupNeedsConfirmation = false;
+extern bool popupActive;
+extern bool popupNeedsConfirmation;
 
 // Add popup response handling
 void handlePopupResponse(bool confirmed) {
@@ -137,7 +137,7 @@ void processMenu() {
     const unsigned long AUTO_SAVE_INTERVAL = 30000;  // 30 seconds
     
     currentMillis = millis();
-    
+
     // Auto-save check
     if (hasUnsavedChanges && 
         (currentMillis - lastSaveCheck >= AUTO_SAVE_INTERVAL)) {
