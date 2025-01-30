@@ -28,9 +28,12 @@ PID motorPID(&pidInput, &pidOutput, &pidSetpoint,
 SystemState currentState = STATE_IDLE;
 
 // Display instance
-U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 void setup() {
+
+  Serial.begin(9600);
+
   // Initialize all pins
   initializePins();
   
@@ -39,7 +42,6 @@ void setup() {
   
   // Show splash screen
   showSplashScreen();
-  delay(5000);
   
   // Initialize PID controller
   motorPID.SetMode(AUTOMATIC);
@@ -67,7 +69,15 @@ void loop() {
   
   // Process menu if needed
   processMenu();
-  
+
+  // Call the PID processing function
+  processPID();
+
+// Debug
+  if (currentState == STATE_RUN)
+  analogWrite(RGB_BLUE_PIN, pidOutput);
+
   // Handle alarms
   checkAlarms();
+
 } 

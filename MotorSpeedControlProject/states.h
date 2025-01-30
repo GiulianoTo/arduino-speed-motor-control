@@ -10,6 +10,7 @@
 
 // System states definition
 enum SystemState {
+    STATE_UNDEFINED,
     STATE_IDLE,    // Motor stopped, system ready
     STATE_RUN,     // Motor running with PID control
     STATE_ALARM    // Alarm condition, motor stopped

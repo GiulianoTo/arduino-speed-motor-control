@@ -6,6 +6,7 @@
 #define MENU_H
 
 #include <stdint.h>
+#include <debounce.h>
 #include "config.h"
 #include "pid.h"
 
@@ -54,7 +55,6 @@ void processMenu();
 void handleMenuSelection();
 void handleBackButton();
 void navigateMenu(bool up);
-bool readButton(uint8_t pin);
 void adjustValue(bool increase);
 
 #endif 

@@ -11,10 +11,10 @@
 #include "alarms.h"  // For getAlarmText()
 
 // Display layout constants
-const uint8_t HEADER_HEIGHT = 12;
-const uint8_t LINE_HEIGHT = 10;
-const uint8_t MENU_START_Y = 15;
-const uint8_t VALUE_X = 75;
+const uint8_t HEADER_HEIGHT = 10;
+const uint8_t LINE_HEIGHT = 8;
+const uint8_t MENU_START_Y = 12;
+const uint8_t VALUE_X = 70;
 
 // Message display timing
 const unsigned long MESSAGE_DISPLAY_TIME = 2000;  // 2 seconds
@@ -36,6 +36,6 @@ void showPopup(const char* title, const char* message, bool needConfirmation = f
 bool isDisplayError();
 void handleDisplayError();
 
-extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
+extern U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2;
 
 #endif 

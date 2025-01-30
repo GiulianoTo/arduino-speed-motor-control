@@ -9,6 +9,7 @@
 #include "eeprom_manager.h"  // For saveParameters()
 #include "pid.h"            // For updatePIDParameters()
 #include "states.h"         // For SystemState and currentState
+#include <debounce.h>
 
 // Menu global variables definition
 MenuState currentMenu = MENU_NONE;
@@ -17,36 +18,126 @@ unsigned long lastMenuActivity = 0;
 bool editingValue = false;
 unsigned long lastButtonPress = 0;
 bool hasUnsavedChanges = false;
+unsigned long currentMillis;
+extern bool popupActive;
+extern bool popupNeedsConfirmation;
 
-// Read buttons with debounce
-bool readButton(uint8_t pin) {
-    static unsigned long lastDebounceTime = 0;
-    static int lastButtonState = HIGH;
-    bool buttonPressed = false;
+// Add popup response handling
+void handlePopupResponse(bool confirmed) {
+    static MenuState previousMenu = MENU_NONE;
     
-    int reading = digitalRead(pin);
-    
-    if (reading != lastButtonState) {
-        lastDebounceTime = millis();
-    }
-    
-    if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY) {
-        if (reading == LOW) {  // Button pressed (active low)
-            buttonPressed = true;
-            lastMenuActivity = millis();
+    if (confirmed) {
+        if (editingValue) {
+            ::saveParameters();
+            if (currentMenu == MENU_PID) {
+                updatePIDParameters();
+            }
+            editingValue = false;
+            hasUnsavedChanges = false;
         }
+        
+        // Handle calibration confirmation
+        if (currentMenu == MENU_CALIBRATION) {
+            handleCalibration();
+        }
+    } else {
+        // If not confirmed, revert to previous state
+        if (editingValue) {
+            loadParameters();  // Reload from EEPROM
+            editingValue = false;
+            hasUnsavedChanges = false;
+        }
+        currentMenu = previousMenu;
     }
-    
-    lastButtonState = reading;
-    return buttonPressed;
 }
+
+static void buttonUpHandler(uint8_t btnId, uint8_t btnState) {
+    if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
+        if (currentMenu == MENU_NONE && currentState == STATE_RUN) {
+            // Se siamo nella schermata principale e in running, modifica setpoint
+            adjustSetpoint(true);
+        }
+        else if (editingValue) {
+            adjustValue(true);
+        } else {
+            navigateMenu(true);
+        }
+    } else {
+        // btnState == BTN_OPEN.
+    }
+}
+
+static void buttonDownHandler(uint8_t btnId, uint8_t btnState) {
+    if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
+        if (currentMenu == MENU_NONE && currentState == STATE_RUN) {
+            // Se siamo nella schermata principale e in running, modifica setpoint
+            adjustSetpoint(false);
+        }
+        else if (editingValue) {
+            adjustValue(false);
+        } else {
+            navigateMenu(false);
+        }
+    } else {
+        // btnState == BTN_OPEN.
+    }
+}
+
+static void buttonEnterHandler(uint8_t btnId, uint8_t btnState) {
+    if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
+
+        // Controlla se il popup è attivo
+        if (popupActive) {
+            // Gestisci la risposta al popup
+            if (popupNeedsConfirmation) {
+                    handlePopupResponse(true);  // Conferma
+                    popupActive = false;         // Nascondi il popup
+                }
+        }
+        else {
+            handleMenuSelection();
+        }
+    } else {
+        // btnState == BTN_OPEN.
+
+    }
+}
+
+static void buttonBackHandler(uint8_t btnId, uint8_t btnState) {
+    if (btnState == BTN_PRESSED) {
+        lastMenuActivity = currentMillis;
+
+        // Controlla se il popup è attivo
+        if (popupActive) {
+            // Gestisci la risposta al popup
+            if (popupNeedsConfirmation) {
+                handlePopupResponse(false);  // Annulla
+                popupActive = false;          // Nascondi il popup
+                }
+        }
+        else
+            handleBackButton();
+    } else {
+        // btnState == BTN_OPEN.
+    }
+}
+
+// Initialize debounce objects
+static Button buttonUp(0, buttonUpHandler);
+static Button buttonDown(0, buttonDownHandler);
+static Button buttonEnter(0, buttonEnterHandler);
+static Button buttonBack(0, buttonBackHandler);
 
 // Process menu navigation
 void processMenu() {
     static unsigned long lastSaveCheck = 0;
     const unsigned long AUTO_SAVE_INTERVAL = 30000;  // 30 seconds
-    unsigned long currentMillis = millis();
     
+    currentMillis = millis();
+
     // Auto-save check
     if (hasUnsavedChanges && 
         (currentMillis - lastSaveCheck >= AUTO_SAVE_INTERVAL)) {
@@ -67,39 +158,13 @@ void processMenu() {
         return;
     }
     
-    // Check buttons at debounce interval
-    if (currentMillis - lastButtonPress >= DEBOUNCE_DELAY) {
-        // Read buttons
-        if (readButton(BUTTON_UP_PIN)) {
-            lastMenuActivity = currentMillis;
-            if (editingValue) {
-                adjustValue(true);
-            } else {
-                navigateMenu(true);
-            }
-        }
-        
-        if (readButton(BUTTON_DOWN_PIN)) {
-            lastMenuActivity = currentMillis;
-            if (editingValue) {
-                adjustValue(false);
-            } else {
-                navigateMenu(false);
-            }
-        }
-        
-        if (readButton(BUTTON_ENTER_PIN)) {
-            lastMenuActivity = currentMillis;
-            handleMenuSelection();
-        }
-        
-        if (readButton(BUTTON_BACK_PIN)) {
-            lastMenuActivity = currentMillis;
-            handleBackButton();
-        }
-        
-        lastButtonPress = currentMillis;
-    }
+    // Update buttons state
+    buttonUp.update(digitalRead(BUTTON_UP_PIN));
+    buttonDown.update(digitalRead(BUTTON_DOWN_PIN));
+    buttonEnter.update(digitalRead(BUTTON_ENTER_PIN));
+    buttonBack.update(digitalRead(BUTTON_BACK_PIN));
+    
+
 }
 
 // Handle menu selection
@@ -107,7 +172,7 @@ void handleMenuSelection() {
     switch(currentMenu) {
         case MENU_NONE:
             currentMenu = MENU_MAIN;
-            selectedItem = ITEM_RUN;
+            selectedItem = (currentState == STATE_RUN) ? ITEM_STOP : ITEM_RUN;
             break;
             
         case MENU_MAIN:
@@ -117,6 +182,11 @@ void handleMenuSelection() {
                         currentState = STATE_RUN;
                         currentMenu = MENU_NONE;
                     }
+                    break;
+                case ITEM_STOP:
+                    currentState = STATE_IDLE;
+                    pidSetpoint = 0;  // Reset setpoint
+                    currentMenu = MENU_NONE;
                     break;
                 case ITEM_SETTINGS:
                     currentMenu = MENU_SETTINGS;
@@ -192,13 +262,19 @@ void navigateMenu(bool up) {
     switch(currentMenu) {
         case MENU_MAIN:
             if (up) {
-                if (selectedItem == ITEM_RUN) selectedItem = ITEM_BACK;
-                else if (selectedItem == ITEM_SETTINGS) selectedItem = ITEM_RUN;
-                else if (selectedItem == ITEM_BACK) selectedItem = ITEM_SETTINGS;
+                if (selectedItem == ITEM_RUN || selectedItem == ITEM_STOP) 
+                    selectedItem = ITEM_BACK;
+                else if (selectedItem == ITEM_SETTINGS) 
+                    selectedItem = (currentState == STATE_RUN) ? ITEM_STOP : ITEM_RUN;
+                else if (selectedItem == ITEM_BACK) 
+                    selectedItem = ITEM_SETTINGS;
             } else {
-                if (selectedItem == ITEM_RUN) selectedItem = ITEM_SETTINGS;
-                else if (selectedItem == ITEM_SETTINGS) selectedItem = ITEM_BACK;
-                else if (selectedItem == ITEM_BACK) selectedItem = ITEM_RUN;
+                if (selectedItem == ITEM_RUN || selectedItem == ITEM_STOP) 
+                    selectedItem = ITEM_SETTINGS;
+                else if (selectedItem == ITEM_SETTINGS) 
+                    selectedItem = ITEM_BACK;
+                else if (selectedItem == ITEM_BACK) 
+                    selectedItem = (currentState == STATE_RUN) ? ITEM_STOP : ITEM_RUN;
             }
             break;
             
@@ -287,7 +363,7 @@ void adjustValue(bool increase) {
             
         case ITEM_SPEED_FS:
             if (increase) {
-                if (systemParams.speedFullScale >= 500) {
+                if (systemParams.speedFullScale >= 5000) {
                     limitReached = true;
                 } else {
                     systemParams.speedFullScale += STEP_SPEED;
@@ -357,31 +433,3 @@ void handleCalibration() {
     calibrationStep++;
 }
 
-// Add popup response handling
-void handlePopupResponse(bool confirmed) {
-    static MenuState previousMenu = MENU_NONE;
-    
-    if (confirmed) {
-        if (editingValue) {
-            ::saveParameters();
-            if (currentMenu == MENU_PID) {
-                updatePIDParameters();
-            }
-            editingValue = false;
-            hasUnsavedChanges = false;
-        }
-        
-        // Handle calibration confirmation
-        if (currentMenu == MENU_CALIBRATION) {
-            handleCalibration();
-        }
-    } else {
-        // If not confirmed, revert to previous state
-        if (editingValue) {
-            loadParameters();  // Reload from EEPROM
-            editingValue = false;
-            hasUnsavedChanges = false;
-        }
-        currentMenu = previousMenu;
-    }
-}

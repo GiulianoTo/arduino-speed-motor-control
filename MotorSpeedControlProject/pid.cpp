@@ -34,6 +34,8 @@ void processPID() {
             // Apply output only if not in alarm state
             if (currentState != STATE_ALARM) {
                 analogWrite(MOTOR_PWM_PIN, pidOutput);
+            }else{
+                analogWrite(MOTOR_PWM_PIN, 0);
             }
         }
         
