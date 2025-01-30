@@ -23,7 +23,14 @@ void showSplashScreen() {
     u8g2.clearBuffer();
     
     // Draw full screen logo
-    drawLogo(0, 0);  // Logo occupa tutto lo schermo
+
+
+        // Calcola la posizione per centrare l'immagine
+        int x = (u8g2.getDisplayWidth() - 64) / 2;
+        int y = (u8g2.getDisplayHeight() - 64) / 2;
+
+
+    drawLogo(x, y);  // Logo occupa tutto lo schermo
     
     u8g2.sendBuffer();
     delay(2000);  // Mostra il logo per 2 secondi
@@ -98,7 +105,7 @@ void updateDisplay() {
             u8g2.drawStr(12, 24, popupMessage);
             
             if (popupNeedsConfirmation) {
-                u8g2.drawStr(12, 36, "Press ENTER to continue");
+                u8g2.drawStr(12, 36, "Press ENTER");
             } else if (currentMillis - popupStartTime >= POPUP_TIMEOUT) {
                 popupActive = false;
             }
@@ -286,14 +293,7 @@ void drawMenuItem(const char* text, MenuItem item, uint8_t y) {
     }
 }
 
-void drawLogo(uint8_t x, uint8_t y) {
-    static uint8_t buffer[16];  // Buffer per una singola riga
-    
-    // Disegna il logo una riga alla volta
-    for(uint8_t row = 0; row < logo_height; row++) {
-        decompressLogoRow(buffer, row);
-        u8g2.drawXBM(x, y + row, logo_width, 1, buffer);
-    }
+void drawLogo(uint8_t x, uint8_t y)
+{
+    Logo();
 }
-
-// ... rest of the implementation ... 
