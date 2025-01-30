@@ -6,7 +6,7 @@
 #define GLOBALS_H
 
 #include <PID_v1.h>
-#include <Adafruit_ST7735.h>
+#include <U8g2lib.h>
 #include "config.h"
 #include "states.h"
 #include "menu.h"  // Per MenuState e MenuItem
@@ -19,7 +19,7 @@ extern double pidInput, pidOutput, pidSetpoint;
 extern PID motorPID;
 
 // Display instance
-extern Adafruit_ST7735 tft;
+extern U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2;
 
 // State variables
 extern SystemState currentState;
